@@ -1,0 +1,28 @@
+[tools]
+go = "1.25.4"
+"ubi:golangci/golangci-lint" = "latest"
+"ubi:goreleaser/goreleaser" = "latest"
+
+[tasks.format]
+run = "golangci-lint fmt"
+description = "Format code"
+
+[tasks.lint]
+run = "golangci-lint run"
+description = "Run lint tools"
+
+[tasks.install]
+run = "go mod download"
+description = "Download dependencies"
+
+[tasks.freeze]
+run = "go mod tidy && go mod verify"
+description = "Freeze dependencies"
+
+[tasks.freeze-upgrade]
+run = "go get -u ./... && go mod tidy && go mod verify"
+description = "Upgrade dependencies"
+
+[tasks.snapshot]
+run = "	goreleaser build --clean --snapshot --single-target -o \"dist/upload-sarif\""
+description = "Build binary in snapshot mode"
