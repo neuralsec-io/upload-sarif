@@ -1,0 +1,92 @@
+minimum_prek_version: "0.2.23"
+fail_fast: false
+
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+  - pre-push
+  - post-checkout
+  - post-merge
+  - post-rewrite
+
+repos:
+  - repo: local
+    hooks:
+      - id: deps-sync
+        name: 📦 Dependencies — sync
+        entry: mise run install
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [post-checkout, post-merge, post-rewrite]
+        priority: 0
+
+      # 🧊 Dependencies — freeze (tidy + verify) when module files change
+      - id: deps-freeze
+        name: 🧊 Dependencies — freeze
+        entry: mise run freeze
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: (^|/)(go\.mod|go\.sum|\.go)$
+        priority: 0
+
+      # 🔎 Go — lint (read-only)
+      - id: go-lint
+        name: 🐹 Go — lint
+        entry: mise run lint
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        priority: 30
+
+      # ✅ Tests — on push
+      - id: go-test
+        name: ✅ Go — tests
+        entry: mise run test
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        priority: 50
+
+  - repo: builtin
+    hooks:
+      # Mutating hygiene
+      - id: end-of-file-fixer
+        name: 🧹 Hygiene — fix end of file
+        stages: [pre-commit]
+        priority: 10
+      - id: mixed-line-ending
+        name: 🧹 Hygiene — normalize line endings
+        stages: [pre-commit]
+        priority: 11
+      - id: trailing-whitespace
+        name: 🧹 Hygiene — trim trailing whitespace
+        stages: [pre-commit]
+        priority: 12
+
+      # Read-only hygiene/config
+      - id: check-added-large-files
+        name: 🧹 Hygiene — check added large files
+        stages: [pre-commit]
+        priority: 50
+      - id: check-json
+        name: 📦 Config — validate JSON
+        stages: [pre-commit]
+        priority: 50
+      - id: check-toml
+        name: 📦 Config — validate TOML
+        stages: [pre-commit]
+        priority: 50
+      - id: check-yaml
+        name: 📦 Config — validate YAML
+        stages: [pre-commit]
+        priority: 50
+      - id: check-merge-conflict
+        name: 🔀 Safety — detect merge conflict markers
+        stages: [pre-commit]
+        priority: 50
+      - id: no-commit-to-branch
+        name: 🛑 Safety — block commit to protected branch
+        stages: [pre-commit]
+        priority: 50

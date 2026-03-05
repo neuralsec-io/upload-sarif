@@ -1,0 +1,7 @@
+.run
+.idea/
+dist/
+.DS_Store
+
+# Output of the go coverage tool
+*.out
