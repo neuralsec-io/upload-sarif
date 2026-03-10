@@ -36,7 +36,7 @@ docker pull ghcr.io/neuralsec-io/upload-sarif:latest
 ### Build from Source
 
 ```bash
-go install github.com/neuralsec-io/upload-sarif/cmd@latest
+go install github.com/neuralsec-io/upload-sarif/cmd/upload-sarif@latest
 ```
 
 ## Usage

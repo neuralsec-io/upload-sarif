@@ -33,7 +33,7 @@ signs:
     artifacts: checksum
 
 builds:
-  - main: ./cmd
+  - main: ./cmd/upload-sarif
     env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
