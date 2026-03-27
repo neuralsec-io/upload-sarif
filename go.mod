@@ -3,7 +3,7 @@ module github.com/neuralsec-io/upload-sarif
 go 1.25.4
 
 require (
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.0
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
 )
