@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -47,15 +49,15 @@ func NewSarifUploader(url, apiKey, repoOwner, repoName, revision string, fs afer
 }
 
 func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
-	f, err := u.FS.Open(filePath)
+	raw, err := afero.ReadFile(u.FS, filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open SARIF file: %w", err)
 	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil {
-			log.Warn().Err(cerr).Msgf("warning: failed to close file %s", filePath)
-		}
-	}()
+
+	payload, err := minifySARIF(raw)
+	if err != nil {
+		return fmt.Errorf("failed to prepare SARIF file %s: %w", filePath, err)
+	}
 
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
@@ -74,7 +76,7 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create form file: %w", err)
 	}
-	if _, err := io.Copy(part, f); err != nil {
+	if _, err := part.Write(payload); err != nil {
 		return fmt.Errorf("failed to write file to form: %w", err)
 	}
 
@@ -82,18 +84,36 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 		return fmt.Errorf("failed to finalize multipart form: %w", err)
 	}
 
-	body := buf.Bytes()
+	// Gzip-compress the full multipart body. The server runs Echo's
+	// middleware.Decompress() which transparently inflates the request
+	// body before the SARIF handler reads it. Compressing the whole
+	// request body (not just the file part) keeps the server side a
+	// one-liner and lets us stay well under the 6 MiB Lambda Function
+	// URL request payload limit — SARIF JSON typically compresses ~10x.
+	gzBody, err := gzipBytes(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to gzip request body: %w", err)
+	}
 
-	// SHA256 hash of the body — required by CloudFront OAC for POST
-	// requests to Lambda Function URLs with IAM auth.
-	hash := sha256.Sum256(body)
+	log.Debug().
+		Int("raw_bytes", len(raw)).
+		Int("minified_bytes", len(payload)).
+		Int("multipart_bytes", buf.Len()).
+		Int("gzip_bytes", len(gzBody)).
+		Msg("prepared SARIF upload payload")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.Url, bytes.NewReader(body))
+	// SHA256 hash of the body as sent on the wire — required by CloudFront
+	// OAC for POST requests to Lambda Function URLs with IAM auth. Must be
+	// computed on the gzipped bytes, since that is what CloudFront forwards.
+	hash := sha256.Sum256(gzBody)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.Url, bytes.NewReader(gzBody))
 	if err != nil {
 		return fmt.Errorf("failed to create upload request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("X-Access-Token", u.APIKey)
 	req.Header.Set("x-amz-content-sha256", hex.EncodeToString(hash[:]))
 
@@ -113,4 +133,34 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 	}
 
 	return nil
+}
+
+// minifySARIF returns the SARIF document with insignificant whitespace
+// removed. Scanner output is usually pretty-printed; minifying typically
+// shaves 20–40% before gzip even kicks in. If the input is not valid
+// JSON, the original bytes are returned so the server can surface a
+// clear parse error instead of our client silently rewriting payloads.
+func minifySARIF(src []byte) ([]byte, error) {
+	var doc any
+	if err := json.Unmarshal(src, &doc); err != nil {
+		return src, nil //nolint:nilerr // fall through to server-side validation
+	}
+	out, err := json.Marshal(doc)
+	if err != nil {
+		return nil, fmt.Errorf("marshal minified SARIF: %w", err)
+	}
+	return out, nil
+}
+
+func gzipBytes(src []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	if _, err := gw.Write(src); err != nil {
+		_ = gw.Close()
+		return nil, err
+	}
+	if err := gw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
