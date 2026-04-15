@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"errors"
 	"io"
@@ -14,6 +15,26 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// decompressRequest wraps an http.Handler and inflates a gzipped
+// request body in-place so downstream assertions can use the normal
+// multipart helpers. Mirrors what Echo's middleware.Decompress does on
+// the real server.
+func decompressRequest(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			gz, err := gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, "invalid gzip body", http.StatusBadRequest)
+				return
+			}
+			r.Body = gz
+			r.Header.Del("Content-Encoding")
+			r.ContentLength = -1
+		}
+		next(w, r)
+	}
+}
 
 type failingClient struct {
 	err error
@@ -48,7 +69,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("successful upload with multipart form", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, http.MethodPost, r.Method)
 			assert.Equal(t, "/", r.URL.Path)
 			assert.True(t, strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data"))
@@ -68,7 +89,8 @@ func TestSarifUploader_Upload(t *testing.T) {
 
 			data, err := io.ReadAll(file)
 			require.NoError(t, err)
-			assert.Equal(t, `{"runs": []}`, string(data))
+			// Client minifies the JSON before upload, so whitespace is gone.
+			assert.JSONEq(t, `{"runs": []}`, string(data))
 
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{"ticket_ids":["uuid-1"]}`))
@@ -83,7 +105,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("successful upload returns no error for 201 status", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 		}))
 		defer server.Close()
@@ -96,7 +118,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("upload without API key is rejected", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
 			if r.Header.Get("X-Access-Token") == "" {
 				http.Error(w, "missing token", http.StatusUnauthorized)
 				return
@@ -114,7 +136,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("server returns 500 internal server error", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, _ *http.Request) {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 		}))
 		defer server.Close()
@@ -128,7 +150,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("server returns 400 bad request", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, _ *http.Request) {
 			http.Error(w, "bad request", http.StatusBadRequest)
 		}))
 		defer server.Close()
@@ -142,7 +164,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("error body is included in error message", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			_, _ = w.Write([]byte(`{"error":"invalid sarif format"}`))
 		}))
@@ -195,7 +217,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 	t.Run("cancelled context returns error", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
@@ -216,7 +238,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 		require.NoError(t, subFs.MkdirAll("path/to", 0o755))
 		require.NoError(t, afero.WriteFile(subFs, "path/to/scan.sarif", []byte(`{"runs":[]}`), 0o644))
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
 			require.NoError(t, r.ParseMultipartForm(10<<20))
 
 			file, header, err := r.FormFile("file")
@@ -242,7 +264,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 		require.NoError(t, afero.WriteFile(largeFs, "detailed.sarif", []byte(largeContent), 0o644))
 
 		var receivedContent string
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
 			require.NoError(t, r.ParseMultipartForm(10<<20))
 
 			file, _, err := r.FormFile("file")
@@ -260,13 +282,14 @@ func TestSarifUploader_Upload(t *testing.T) {
 		uploader := NewSarifUploader(server.URL, "token", "owner", "repo", "rev", largeFs)
 		err := uploader.Upload(context.Background(), "detailed.sarif")
 		require.NoError(t, err)
-		assert.Equal(t, largeContent, receivedContent)
+		// Client minifies JSON before upload; compare semantically.
+		assert.JSONEq(t, largeContent, receivedContent)
 	})
 
 	t.Run("all form fields are sent correctly with special characters", func(t *testing.T) {
 		t.Parallel()
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
 			require.NoError(t, r.ParseMultipartForm(10<<20))
 
 			assert.Equal(t, "my-org-name", r.FormValue("github_repo_owner"))
