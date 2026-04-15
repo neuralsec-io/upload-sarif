@@ -55,7 +55,7 @@ func TestNewSarifUploader(t *testing.T) {
 	assert.Equal(t, "owner", uploader.GitHubRepoOwner)
 	assert.Equal(t, "repo", uploader.GitHubRepoName)
 	assert.Equal(t, "sha1", uploader.Revision)
-	assert.Equal(t, 15*time.Second, uploader.Timeout)
+	assert.Equal(t, 30*time.Second, uploader.Timeout)
 	assert.NotNil(t, uploader.Client)
 	assert.Equal(t, fs, uploader.FS)
 }
