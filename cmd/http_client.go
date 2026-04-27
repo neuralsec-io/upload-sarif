@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -102,11 +100,6 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 		Int("gzip_bytes", len(gzBody)).
 		Msg("prepared SARIF upload payload")
 
-	// SHA256 hash of the body as sent on the wire — required by CloudFront
-	// OAC for POST requests to Lambda Function URLs with IAM auth. Must be
-	// computed on the gzipped bytes, since that is what CloudFront forwards.
-	hash := sha256.Sum256(gzBody)
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.Url, bytes.NewReader(gzBody))
 	if err != nil {
 		return fmt.Errorf("failed to create upload request: %w", err)
@@ -114,8 +107,7 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Content-Encoding", "gzip")
-	req.Header.Set("X-Access-Token", u.APIKey)
-	req.Header.Set("x-amz-content-sha256", hex.EncodeToString(hash[:]))
+	req.Header.Set("Authorization", "Bearer "+u.APIKey)
 
 	resp, err := u.Client.Do(req)
 	if err != nil {
