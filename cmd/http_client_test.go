@@ -73,7 +73,7 @@ func TestSarifUploader_Upload(t *testing.T) {
 			assert.Equal(t, http.MethodPost, r.Method)
 			assert.Equal(t, "/", r.URL.Path)
 			assert.True(t, strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data"))
-			assert.Equal(t, "test-secret-token", r.Header.Get("X-Access-Token"))
+			assert.Equal(t, "Bearer test-secret-token", r.Header.Get("Authorization"))
 
 			require.NoError(t, r.ParseMultipartForm(10<<20))
 
@@ -119,7 +119,8 @@ func TestSarifUploader_Upload(t *testing.T) {
 		t.Parallel()
 
 		server := httptest.NewServer(decompressRequest(func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("X-Access-Token") == "" {
+			token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer"))
+			if token == "" {
 				http.Error(w, "missing token", http.StatusUnauthorized)
 				return
 			}
