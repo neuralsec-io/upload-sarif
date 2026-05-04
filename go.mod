@@ -1,4 +1,4 @@
-module github.com/neuralsec-io/upload-sarif
+module github.com/neuralsec-io/upload-sarif/v2
 
 go 1.25.4
 

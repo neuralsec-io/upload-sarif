@@ -12,7 +12,7 @@ The easiest way to use upload-sarif in CI/CD is via the GitHub Action:
 
 ```yaml
 - name: Upload SARIF to Neuralsec
-  uses: neuralsec-io/upload-sarif@v1
+  uses: neuralsec-io/upload-sarif@v2
   with:
     api-key: ${{ secrets.NEURALSEC_API_KEY }}
     path: results.sarif
@@ -36,7 +36,7 @@ docker pull ghcr.io/neuralsec-io/upload-sarif:latest
 ### Build from Source
 
 ```bash
-go install github.com/neuralsec-io/upload-sarif/cmd@latest
+go install github.com/neuralsec-io/upload-sarif/v2/cmd@latest
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ jobs:
           semgrep --sarif -o results.sarif .
 
       - name: Upload SARIF to Neuralsec
-        uses: neuralsec-io/upload-sarif@v1
+        uses: neuralsec-io/upload-sarif@v2
         with:
           api-key: ${{ secrets.NEURALSEC_API_KEY }}
           path: results.sarif
@@ -72,7 +72,7 @@ jobs:
 |-------|----------|---------|-------------|
 | `api-key` | Yes | - | API key for authentication with Neuralsec API |
 | `path` | Yes | - | Path to SARIF file or directory containing SARIF files |
-| `version` | No | `latest` | Version of the CLI to use (e.g., `v1.0.0`) |
+| `version` | No | `latest` | Version of the CLI to use (e.g., `v2.0.0`) |
 
 The action automatically detects repository context from GitHub:
 - Repository owner and name
@@ -158,7 +158,7 @@ All releases are signed using [Sigstore cosign](https://github.com/sigstore/cosi
 Download the checksums file and its sigstore bundle:
 
 ```bash
-VERSION=v1.0.0
+VERSION=v2.0.0
 curl -sLO "https://github.com/neuralsec-io/upload-sarif/releases/download/${VERSION}/checksums.txt"
 curl -sLO "https://github.com/neuralsec-io/upload-sarif/releases/download/${VERSION}/checksums.txt.sigstore.json"
 ```
@@ -188,7 +188,7 @@ sha256sum -c checksums.txt --ignore-missing
 Docker images are also signed with cosign:
 
 ```bash
-cosign verify ghcr.io/neuralsec-io/upload-sarif:v1.0.0
+cosign verify ghcr.io/neuralsec-io/upload-sarif:v2.0.0
 ```
 
 ## Security
