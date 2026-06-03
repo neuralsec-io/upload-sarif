@@ -8,6 +8,12 @@ before:
     - go mod tidy
     - go generate ./...
 
+# release-please creates the GitHub release + tag; goreleaser uploads the
+# built/signed artifacts onto it. "append" adds to an existing release (and
+# still creates one if a tag is pushed manually without release-please).
+release:
+  mode: append
+
 checksum:
   name_template: "checksums.txt"
 

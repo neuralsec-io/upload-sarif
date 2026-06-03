@@ -1,0 +1,63 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  # 1. Maintain a rolling "release PR": bumps version + CHANGELOG from
+  #    conventional commits. Merging that PR creates the vX.Y.Z tag + GitHub
+  #    release. release_created is true only on the merge that cuts a release.
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      major: ${{ steps.release.outputs.major }}
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # 2. Build/sign/publish artifacts onto the release that release-please just
+  #    created. Chained here (not via tag-push) because tags pushed with the
+  #    default GITHUB_TOKEN do not trigger other workflows.
+  goreleaser:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    permissions:
+      contents: write # write release assets
+      id-token: write # keyless cosign signing
+      packages: write # push to ghcr
+    secrets: inherit
+    uses: ./.github/workflows/release.yml
+
+  # 3. Move the floating major tag (e.g. v2) to the new release so that
+  #    consumers pinning `uses: neuralsec-io/upload-sarif@v2` get the update.
+  major-tag:
+    needs: [release-please, goreleaser]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+      - name: Move floating major tag
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          MAJOR: v${{ needs.release-please.outputs.major }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f "$MAJOR" "$TAG"
+          git push -f origin "refs/tags/$MAJOR"
