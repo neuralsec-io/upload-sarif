@@ -1,27 +1,15 @@
 [tools]
 go = "1.26.5"
 prek = "0.4.11"
-# Pinned, not "latest", and on the `github:` backend rather than the deprecated
-# `ubi:` one. "latest" is invisible to the dependency updater, so these three
-# silently drifted while every other dependency here was tracked; pinning also
-# means CI and a developer's machine run the same linter rather than whatever
-# shipped that morning.
+# Pinned rather than "latest": "latest" is invisible to the dependency updater,
+# so these drift untracked and CI stops matching local.
 "github:golangci/golangci-lint" = "2.12.2"
 "github:goreleaser/goreleaser" = "2.17.1"
 "github:gotestyourself/gotestsum" = "1.13.0"
-# Used only by .github/workflows/upgrade-deps.yml. Pinned here rather than in
-# the workflow so Renovate's mise manager keeps its own version current.
-#
-# trust_policy_excludes: installing Renovate trips mise's no-downgrade trust
-# policy on a transitive dependency —
-#   @yarnpkg/libzip@3.2.2 ... earlier published version 3.2.0 had provenance
-#   attestation but this version has no trust evidence
-# Checked against npm before excluding: 3.2.0 and 3.2.1 carry SLSA provenance
-# and were published by `yarnbot`; 3.2.2 has no attestation and was published by
-# `arcanis`, the Yarn lead, from the same yarnpkg/berry repo. That is a manual
-# publish outside the release workflow, not evidence of tampering. The exclude
-# is pinned to that exact version so any other package — or any later libzip —
-# still trips the policy.
+# Used by .github/workflows/upgrade-deps.yml; pinned here so the updater tracks it.
+# The exclude is for a transitive dep published without provenance (a manual
+# upstream release, checked at the time). Pinned to that exact version so any
+# other package, or a later libzip, still trips mise's trust policy.
 "npm:renovate" = { version = "44.26.0", trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
 ] }

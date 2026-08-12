@@ -15,13 +15,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      # checkout comes first: ci-setup is a local action, so the runner has to
-      # read it out of the workspace before it can run.
+      # checkout first: ci-setup is local, so it must exist in the workspace.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/ci-setup
       - run: go mod download
-      # golangci-lint comes from mise rather than golangci-lint-action, so CI
-      # and `mise run lint` use the one version pinned in mise.toml.
       - run: golangci-lint run --timeout=10m
 
   tests:
@@ -30,8 +27,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/ci-setup
       - run: go mod download
-      # gotestsum from mise, not `go run ...@latest`, which resolved a new
-      # version on every run and was never covered by dependency updates.
       - name: Run tests
         run: |
           gotestsum --junitfile unit-tests.xml --format pkgname \

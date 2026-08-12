@@ -15,10 +15,8 @@ runs:
         install: true
         cache: true
 
-    # Keyed on go.sum so a dependency change invalidates it; the run_id suffix
-    # makes every run write a fresh entry, with restore-keys falling back to the
-    # most recent compatible one (GitHub Actions cache entries are immutable, so
-    # a fixed key would never pick up newly compiled packages).
+    # run_id in the key: cache entries are immutable, so a fixed key would never
+    # pick up newly compiled packages. restore-keys falls back to the last one.
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
