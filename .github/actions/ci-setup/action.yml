@@ -1,0 +1,40 @@
+name: CI setup
+description: >-
+  Shared CI preamble for this repo: the mise toolchain plus the Go module and
+  build caches.
+
+  Mirrors neuralsec-io/actions/.github/actions/ci-setup, which this repo cannot
+  consume: that action lives in a private repo and a public repo cannot resolve
+  actions or reusable workflows from one (GitHub reports "workflow was not
+  found"). It also assumes AWS OIDC credentials that this repo needs none of.
+
+  Caching IS enabled here, unlike the shared action. That action disabled the
+  org's S3 caches after they were audited net-negative on the self-hosted fleet;
+  this repo runs on GitHub-hosted runners where actions/cache is free and the Go
+  module download dominates a short job.
+
+  Being a local action, it CANNOT check out the repository — the runner has to
+  read this file from the workspace first. Callers run actions/checkout
+  themselves and then `uses: ./.github/actions/ci-setup`.
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+      with:
+        install: true
+        cache: true
+
+    # Keyed on go.sum so a dependency change invalidates it; the run_id suffix
+    # makes every run write a fresh entry, with restore-keys falling back to the
+    # most recent compatible one (GitHub Actions cache entries are immutable, so
+    # a fixed key would never pick up newly compiled packages).
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/go.sum') }}-${{ github.run_id }}
+        restore-keys: |
+          go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/go.sum') }}-
+          go-${{ runner.os }}-${{ runner.arch }}-
