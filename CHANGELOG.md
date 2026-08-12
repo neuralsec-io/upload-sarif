@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.3](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.2...v2.0.3) (2026-08-12)
+
+
+### Bug Fixes
+
+* correct stale test-summary/action version comment ([#21](https://github.com/neuralsec-io/upload-sarif/issues/21)) ([3e9dd3a](https://github.com/neuralsec-io/upload-sarif/commit/3e9dd3a9e8387408c54f438626dc7dda3aabea3d))
+* **test:** stop TestParseFlags racing on the process environment ([#22](https://github.com/neuralsec-io/upload-sarif/issues/22)) ([009146f](https://github.com/neuralsec-io/upload-sarif/commit/009146f138bae9a137de246a1c9f1d86179f227c))
+* unblock Renovate install and pin its node runtime ([#16](https://github.com/neuralsec-io/upload-sarif/issues/16)) ([b479738](https://github.com/neuralsec-io/upload-sarif/commit/b47973871a757f55ddafe5b676bbdd18b81a5f8e))
+
 ## [2.0.2](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.1...v2.0.2) (2026-08-12)
 
 
