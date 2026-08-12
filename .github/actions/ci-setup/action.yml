@@ -1,21 +1,11 @@
 name: CI setup
 description: >-
   Shared CI preamble for this repo: the mise toolchain plus the Go module and
-  build caches.
+  build caches, so every job resolves tools from one pinned source.
 
-  Mirrors neuralsec-io/actions/.github/actions/ci-setup, which this repo cannot
-  consume: that action lives in a private repo and a public repo cannot resolve
-  actions or reusable workflows from one (GitHub reports "workflow was not
-  found"). It also assumes AWS OIDC credentials that this repo needs none of.
-
-  Caching IS enabled here, unlike the shared action. That action disabled the
-  org's S3 caches after they were audited net-negative on the self-hosted fleet;
-  this repo runs on GitHub-hosted runners where actions/cache is free and the Go
-  module download dominates a short job.
-
-  Being a local action, it CANNOT check out the repository — the runner has to
-  read this file from the workspace first. Callers run actions/checkout
-  themselves and then `uses: ./.github/actions/ci-setup`.
+  Being a local composite action, it CANNOT check out the repository — the
+  runner has to read this file out of the workspace first. Callers run
+  actions/checkout themselves and then `uses: ./.github/actions/ci-setup`.
 
 runs:
   using: composite

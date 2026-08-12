@@ -30,7 +30,7 @@ Available for:
 ### Docker
 
 ```bash
-docker pull ghcr.io/neuralsec-io/upload-sarif:latest
+docker pull ghcr.io/neuralsec-io/upload-sarif:v2.0.2
 ```
 
 ### Build from Source
@@ -72,7 +72,7 @@ jobs:
 |-------|----------|---------|-------------|
 | `api-key` | Yes | - | API key for authentication with Neuralsec API |
 | `path` | Yes | - | Path to SARIF file or directory containing SARIF files |
-| `version` | No | `latest` | Version of the CLI to use (e.g., `v2.0.0`) |
+| `version` | No | `latest` | Version of the CLI to use (e.g., `v2.0.2`) |
 
 The action automatically detects repository context from GitHub:
 - Repository owner and name
@@ -145,7 +145,7 @@ docker run --rm \
   -e GITHUB_REPO_NAME=myrepo \
   -e REVISION=abc123def456 \
   -e API_KEY=your-api-key \
-  ghcr.io/neuralsec-io/upload-sarif:latest \
+  ghcr.io/neuralsec-io/upload-sarif:v2.0.2 \
   --path /workspace/results.sarif
 ```
 
@@ -158,16 +158,20 @@ All releases are signed using [Sigstore cosign](https://github.com/sigstore/cosi
 Download the checksums file and its sigstore bundle:
 
 ```bash
-VERSION=v2.0.0
+VERSION=v2.0.2
 curl -sLO "https://github.com/neuralsec-io/upload-sarif/releases/download/${VERSION}/checksums.txt"
 curl -sLO "https://github.com/neuralsec-io/upload-sarif/releases/download/${VERSION}/checksums.txt.sigstore.json"
 ```
 
-Verify the signature:
+Verify the signature. Releases are signed keylessly, so cosign needs the
+expected signer identity — without `--certificate-identity-regexp` and
+`--certificate-oidc-issuer` it refuses to verify:
 
 ```bash
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp "^https://github\.com/neuralsec-io/upload-sarif/\.github/workflows/release\.yml@refs/(heads/main|tags/.+)$" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   checksums.txt
 ```
 
@@ -188,7 +192,9 @@ sha256sum -c checksums.txt --ignore-missing
 Docker images are also signed with cosign:
 
 ```bash
-cosign verify ghcr.io/neuralsec-io/upload-sarif:v2.0.0
+cosign verify ghcr.io/neuralsec-io/upload-sarif:v2.0.2 \
+  --certificate-identity-regexp "^https://github\.com/neuralsec-io/upload-sarif/\.github/workflows/release\.yml@refs/(heads/main|tags/.+)$" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
 ```
 
 ## Security
