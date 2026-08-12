@@ -15,25 +15,27 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      # checkout comes first: ci-setup is a local action, so the runner has to
+      # read it out of the workspace before it can run.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+      - uses: ./.github/actions/ci-setup
       - run: go mod download
-      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          args: --timeout=10m
+      # golangci-lint comes from mise rather than golangci-lint-action, so CI
+      # and `mise run lint` use the one version pinned in mise.toml.
+      - run: golangci-lint run --timeout=10m
+
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+      - uses: ./.github/actions/ci-setup
       - run: go mod download
-      - run: go run gotest.tools/gotestsum@latest --junitfile unit-tests.xml --format pkgname -- -tags test -coverpkg=./... -coverprofile=cover.out ./...
+      # gotestsum from mise, not `go run ...@latest`, which resolved a new
+      # version on every run and was never covered by dependency updates.
+      - name: Run tests
+        run: |
+          gotestsum --junitfile unit-tests.xml --format pkgname \
+            -- -tags test -timeout 5m -coverpkg=./... -coverprofile=cover.out ./...
       - uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5 # v2.6
         with:
           paths: "unit-tests.xml"
