@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "v*"
-  # Invoked by release-please.yml after it cuts a release. Also runnable
-  # standalone by pushing a v* tag manually (fallback / hotfix path).
   workflow_call:
 
 permissions:

@@ -1,11 +1,7 @@
 name: CI setup
 description: >-
-  Shared CI preamble for this repo: the mise toolchain plus the Go module and
-  build caches, so every job resolves tools from one pinned source.
-
-  Being a local composite action, it CANNOT check out the repository — the
-  runner has to read this file out of the workspace first. Callers run
-  actions/checkout themselves and then `uses: ./.github/actions/ci-setup`.
+  mise toolchain plus Go module/build caches. Local action, so callers must
+  run actions/checkout before it.
 
 runs:
   using: composite
@@ -15,8 +11,7 @@ runs:
         install: true
         cache: true
 
-    # run_id in the key: cache entries are immutable, so a fixed key would never
-    # pick up newly compiled packages. restore-keys falls back to the last one.
+    # run_id: cache entries are immutable, so a fixed key never updates.
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |

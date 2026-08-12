@@ -110,8 +110,7 @@ runs:
         ACTION_REPO: ${{ github.action_repository }}
       run: |
         echo "Verifying checksums.txt signature with Cosign..."
-        # cosign v2+ refuses keyless verification without an expected signer.
-        # Releases are cut from main or from a v* tag, so both refs are accepted.
+        # cosign v2+ refuses keyless verification without a signer identity.
         cosign verify-blob \
           --bundle /tmp/checksums.txt.sigstore.json \
           --certificate-identity-regexp "^https://github\.com/${ACTION_REPO}/\.github/workflows/release\.yml@refs/(heads/main|tags/.+)$" \
@@ -134,8 +133,7 @@ runs:
         
         echo "Verifying checksum for ${ARCHIVE_NAME}..."
         
-        # Match the filename field exactly — a substring match also hits
-        # "<archive>.sbom.json" and yields two hashes.
+        # Exact field match: a substring also hits "<archive>.sbom.json".
         EXPECTED=$(awk -v f="${ARCHIVE_NAME}" '$2 == f { print $1 }' /tmp/checksums.txt)
         if [ -z "$EXPECTED" ]; then
           echo "::error::Archive not found in checksums.txt"

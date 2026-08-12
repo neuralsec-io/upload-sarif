@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Every variable parseFlags reads. Cases clear all of them first so an ambient
-// value cannot satisfy a flag the case expects to be missing.
 var envKeys = []string{
 	"GITHUB_REPO_OWNER",
 	"GITHUB_REPO_NAME",
@@ -18,7 +16,6 @@ var envKeys = []string{
 	"LOG_LEVEL",
 }
 
-// Not parallel: subtests mutate the process environment.
 func TestParseFlags(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -141,9 +138,7 @@ func TestParseFlags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Not parallel: these set process-wide env, so concurrent cases
-			// clobbered each other. t.Setenv panics if the test is parallel,
-			// which keeps that from returning.
+			// Not parallel: these mutate process-wide env.
 			for _, k := range envKeys {
 				t.Setenv(k, "")
 			}

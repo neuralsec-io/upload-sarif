@@ -1,15 +1,10 @@
 [tools]
 go = "1.26.5"
 prek = "0.4.11"
-# Pinned rather than "latest": "latest" is invisible to the dependency updater,
-# so these drift untracked and CI stops matching local.
 "github:golangci/golangci-lint" = "2.12.2"
 "github:goreleaser/goreleaser" = "2.17.1"
 "github:gotestyourself/gotestsum" = "1.13.0"
-# Used by .github/workflows/upgrade-deps.yml; pinned here so the updater tracks it.
-# The exclude is for a transitive dep published without provenance (a manual
-# upstream release, checked at the time). Pinned to that exact version so any
-# other package, or a later libzip, still trips mise's trust policy.
+# Exclude is version-exact so anything else still trips mise's trust policy.
 "npm:renovate" = { version = "44.26.0", trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
 ] }

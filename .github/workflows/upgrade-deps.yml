@@ -13,8 +13,6 @@ concurrency:
 
 jobs:
   renovate:
-    # Run locally rather than via a shared workflow; update policy still comes
-    # from the preset in .github/renovate.json, so only the runner is local.
     runs-on: ubuntu-latest
     permissions:
       contents: read # checkout only; Renovate authenticates as the App below
@@ -25,14 +23,12 @@ jobs:
           client-id: 1988247
           private-key: ${{ secrets.UPGRADE_DEPENDENCIES_BOT_PEM }}
           owner: neuralsec-io
-          # Narrowed from the App's full installation scope: the repo being
-          # updated, plus the one holding the preset Renovate resolves.
           repositories: |
             upload-sarif
             upgrade-deps
 
-      # persist-credentials: false — the header checkout leaves behind is scoped
-      # to this repo and would override Renovate's own git credentials.
+      # persist-credentials: false — otherwise checkout's header overrides
+      # Renovate's git credentials.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -50,6 +46,5 @@ jobs:
           RENOVATE_PLATFORM_COMMIT: "enabled" # commits signed by the App
           RENOVATE_CONFIG_FILE: .github/renovate.json
           RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
-        # node@24 rather than whatever the runner image ships: renovate 44
-        # declares `node ^24.11.0`, and ubuntu-latest is already past that.
+        # renovate 44 requires node ^24.11.0; the runner image ships newer.
         run: mise exec node@24 -- renovate

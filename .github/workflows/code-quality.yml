@@ -15,7 +15,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      # checkout first: ci-setup is local, so it must exist in the workspace.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/ci-setup
       - run: go mod download
