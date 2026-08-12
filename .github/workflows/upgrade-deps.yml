@@ -63,4 +63,7 @@ jobs:
           RENOVATE_PLATFORM_COMMIT: "enabled" # commits signed by the App
           RENOVATE_CONFIG_FILE: .github/renovate.json
           RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
-        run: renovate
+        # node@24 rather than whatever the runner image ships: renovate 44
+        # declares `node ^24.11.0`, and ubuntu-latest is already past that.
+        # Same approach as the shared upgrade-deps-reusable.yml.
+        run: mise exec node@24 -- renovate
