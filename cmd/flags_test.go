@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -9,9 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseFlags(t *testing.T) {
-	t.Parallel()
+// envKeys is every variable parseFlags reads. Each case clears all of them
+// before setting the ones it needs, so a variable left over from the ambient
+// environment cannot satisfy a flag the case expects to be missing.
+var envKeys = []string{
+	"GITHUB_REPO_OWNER",
+	"GITHUB_REPO_NAME",
+	"REVISION",
+	"API_KEY",
+	"LOG_LEVEL",
+}
 
+// Not parallel: subtests mutate the process environment via t.Setenv, which
+// other tests in this package run concurrently with.
+func TestParseFlags(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string
@@ -133,11 +143,18 @@ func TestParseFlags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			os.Clearenv()
+			// Deliberately not parallel. These cases set process-wide
+			// environment variables, so running them concurrently meant one
+			// subtest's os.Clearenv() could wipe variables another had just
+			// set — the env-var case then failed with "missing required
+			// flags" depending on scheduling. t.Setenv restores the previous
+			// value automatically and panics if the test is parallel, so it
+			// also stops this regressing.
+			for _, k := range envKeys {
+				t.Setenv(k, "")
+			}
 			for k, v := range tt.env {
-				require.NoError(t, os.Setenv(k, v))
+				t.Setenv(k, v)
 			}
 
 			opts, err := parseFlags(tt.args)
