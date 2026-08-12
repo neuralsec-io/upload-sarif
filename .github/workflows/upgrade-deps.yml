@@ -13,13 +13,9 @@ concurrency:
 
 jobs:
   renovate:
-    # This repo is public, so it must not run on the org's self-hosted fleet:
-    # a public repo's workflows are a far broader attack surface than a private
-    # one's. That also rules out the shared upgrade-deps-reusable.yml, which
-    # depends on the runs-on S3 cache and the AWS role that exist only on that
-    # fleet. Renovate is therefore invoked directly here — the config itself
-    # still comes from the shared preset via .github/renovate.json, so policy
-    # stays centralised even though the runner does not.
+    # Renovate is invoked directly on a GitHub-hosted runner rather than through
+    # a shared workflow. Update policy is still centralised — it comes from the
+    # preset referenced in .github/renovate.json — so only the runner is local.
     runs-on: ubuntu-latest
     permissions:
       contents: read # checkout only; Renovate authenticates as the App below
@@ -30,12 +26,9 @@ jobs:
           client-id: 1988247
           private-key: ${{ secrets.UPGRADE_DEPENDENCIES_BOT_PEM }}
           owner: neuralsec-io
-          # Narrowed to the two repos actually needed, rather than the App's
-          # full org-wide installation scope that the other callers inherit —
-          # this token is minted in a public repo. upload-sarif is the repo
-          # being updated; upgrade-deps is required because Renovate resolves
-          # the shared preset in .github/renovate.json over the API with this
-          # same token, and that repo is private.
+          # Narrowed to only the repositories this run needs, rather than the
+          # App's full installation scope: the repo being updated, plus the one
+          # holding the preset that Renovate resolves over the API.
           repositories: |
             upload-sarif
             upgrade-deps
@@ -65,5 +58,4 @@ jobs:
           RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
         # node@24 rather than whatever the runner image ships: renovate 44
         # declares `node ^24.11.0`, and ubuntu-latest is already past that.
-        # Same approach as the shared upgrade-deps-reusable.yml.
         run: mise exec node@24 -- renovate

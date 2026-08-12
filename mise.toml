@@ -2,10 +2,10 @@
 go = "1.26.5"
 prek = "0.4.11"
 # Pinned, not "latest", and on the `github:` backend rather than the deprecated
-# `ubi:` one — matching ops-alerter and app-api. "latest" is invisible to
-# Renovate's mise manager, so these three silently drifted while every other
-# dependency here was tracked; pinning also means CI and a developer's machine
-# run the same linter rather than whatever shipped that morning.
+# `ubi:` one. "latest" is invisible to the dependency updater, so these three
+# silently drifted while every other dependency here was tracked; pinning also
+# means CI and a developer's machine run the same linter rather than whatever
+# shipped that morning.
 "github:golangci/golangci-lint" = "2.12.2"
 "github:goreleaser/goreleaser" = "2.17.1"
 "github:gotestyourself/gotestsum" = "1.13.0"
