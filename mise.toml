@@ -4,6 +4,9 @@ prek = "0.3.1"
 "ubi:golangci/golangci-lint" = "latest"
 "ubi:goreleaser/goreleaser" = "latest"
 "ubi:gotestyourself/gotestsum" = "latest"
+# Used only by .github/workflows/upgrade-deps.yml. Pinned here rather than in
+# the workflow so Renovate's mise manager keeps its own version current.
+"npm:renovate" = "44.26.0"
 
 [tasks.format]
 run = "golangci-lint fmt"
