@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.1...v2.0.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* repair action signature and checksum verification ([#13](https://github.com/neuralsec-io/upload-sarif/issues/13)) ([376f117](https://github.com/neuralsec-io/upload-sarif/commit/376f117d5cda915024cfab51e0115827b45d9e7b))
+
 ## [2.0.1](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.0...v2.0.1) (2026-08-12)
 
 
