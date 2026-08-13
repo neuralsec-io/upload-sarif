@@ -97,10 +97,8 @@ runs:
         
         echo "Downloading upload-sarif ${VERSION} for ${OS}/${ARCH}..."
         
-        # Download archive
         curl -sL -o "/tmp/${ARCHIVE_NAME}" "${BASE_URL}/${ARCHIVE_NAME}"
         
-        # Download checksums and sigstore bundle
         curl -sL -o "/tmp/checksums.txt" "${BASE_URL}/checksums.txt"
         curl -sL -o "/tmp/checksums.txt.sigstore.json" "${BASE_URL}/checksums.txt.sigstore.json"
         
@@ -112,10 +110,7 @@ runs:
         ACTION_REPO: ${{ github.action_repository }}
       run: |
         echo "Verifying checksums.txt signature with Cosign..."
-        # Keyless verification requires an expected signer identity; without it
-        # cosign v2+ refuses to verify at all. Releases are signed by the
-        # reusable release workflow, reached either via release-please on main
-        # or by pushing a v* tag directly, so both refs are accepted.
+        # cosign v2+ refuses keyless verification without a signer identity.
         cosign verify-blob \
           --bundle /tmp/checksums.txt.sigstore.json \
           --certificate-identity-regexp "^https://github\.com/${ACTION_REPO}/\.github/workflows/release\.yml@refs/(heads/main|tags/.+)$" \
@@ -138,16 +133,13 @@ runs:
         
         echo "Verifying checksum for ${ARCHIVE_NAME}..."
         
-        # Extract expected checksum. Match the filename field exactly: a
-        # substring match also hits "<archive>.sbom.json", which would put two
-        # hashes in EXPECTED and make the comparison below always fail.
+        # Exact field match: a substring also hits "<archive>.sbom.json".
         EXPECTED=$(awk -v f="${ARCHIVE_NAME}" '$2 == f { print $1 }' /tmp/checksums.txt)
         if [ -z "$EXPECTED" ]; then
           echo "::error::Archive not found in checksums.txt"
           exit 1
         fi
         
-        # Calculate actual checksum
         ACTUAL=$(sha256sum "/tmp/${ARCHIVE_NAME}" | awk '{print $1}')
         
         if [ "$EXPECTED" != "$ACTUAL" ]; then

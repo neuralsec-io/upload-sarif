@@ -8,9 +8,6 @@ on:
 permissions: {}
 
 jobs:
-  # 1. Maintain a rolling "release PR": bumps version + CHANGELOG from
-  #    conventional commits. Merging that PR creates the vX.Y.Z tag + GitHub
-  #    release. release_created is true only on the merge that cuts a release.
   release-please:
     runs-on: ubuntu-latest
     permissions:
@@ -27,9 +24,8 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # 2. Build/sign/publish artifacts onto the release that release-please just
-  #    created. Chained here (not via tag-push) because tags pushed with the
-  #    default GITHUB_TOKEN do not trigger other workflows.
+  # Chained, not tag-triggered: tags pushed with GITHUB_TOKEN do not start
+  # other workflows.
   goreleaser:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
@@ -40,8 +36,6 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/release.yml
 
-  # 3. Move the floating major tag (e.g. v2) to the new release so that
-  #    consumers pinning `uses: neuralsec-io/upload-sarif@v2` get the update.
   major-tag:
     needs: [release-please, goreleaser]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}

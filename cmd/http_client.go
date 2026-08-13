@@ -82,12 +82,8 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 		return fmt.Errorf("failed to finalize multipart form: %w", err)
 	}
 
-	// Gzip-compress the full multipart body. The server runs Echo's
-	// middleware.Decompress() which transparently inflates the request
-	// body before the SARIF handler reads it. Compressing the whole
-	// request body (not just the file part) keeps the server side a
-	// one-liner and lets us stay well under the 6 MiB Lambda Function
-	// URL request payload limit — SARIF JSON typically compresses ~10x.
+	// Gzip the whole body (server inflates it transparently): keeps us under
+	// the 6 MiB Lambda Function URL payload limit.
 	gzBody, err := gzipBytes(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("failed to gzip request body: %w", err)
@@ -127,11 +123,8 @@ func (u *SarifUploader) Upload(ctx context.Context, filePath string) error {
 	return nil
 }
 
-// minifySARIF returns the SARIF document with insignificant whitespace
-// removed. Scanner output is usually pretty-printed; minifying typically
-// shaves 20–40% before gzip even kicks in. If the input is not valid
-// JSON, the original bytes are returned so the server can surface a
-// clear parse error instead of our client silently rewriting payloads.
+// minifySARIF strips insignificant whitespace. Invalid JSON is returned
+// unchanged so the server reports the parse error.
 func minifySARIF(src []byte) ([]byte, error) {
 	var doc any
 	if err := json.Unmarshal(src, &doc); err != nil {

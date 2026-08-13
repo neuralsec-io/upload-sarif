@@ -16,10 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// decompressRequest wraps an http.Handler and inflates a gzipped
-// request body in-place so downstream assertions can use the normal
-// multipart helpers. Mirrors what Echo's middleware.Decompress does on
-// the real server.
+// decompressRequest inflates a gzipped request body, as the real server does.
 func decompressRequest(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {
@@ -89,7 +86,6 @@ func TestSarifUploader_Upload(t *testing.T) {
 
 			data, err := io.ReadAll(file)
 			require.NoError(t, err)
-			// Client minifies the JSON before upload, so whitespace is gone.
 			assert.JSONEq(t, `{"runs": []}`, string(data))
 
 			w.WriteHeader(http.StatusOK)
@@ -283,7 +279,6 @@ func TestSarifUploader_Upload(t *testing.T) {
 		uploader := NewSarifUploader(server.URL, "token", "owner", "repo", "rev", largeFs)
 		err := uploader.Upload(context.Background(), "detailed.sarif")
 		require.NoError(t, err)
-		// Client minifies JSON before upload; compare semantically.
 		assert.JSONEq(t, largeContent, receivedContent)
 	})
 

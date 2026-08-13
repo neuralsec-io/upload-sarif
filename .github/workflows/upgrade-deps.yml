@@ -13,9 +13,6 @@ concurrency:
 
 jobs:
   renovate:
-    # Renovate is invoked directly on a GitHub-hosted runner rather than through
-    # a shared workflow. Update policy is still centralised — it comes from the
-    # preset referenced in .github/renovate.json — so only the runner is local.
     runs-on: ubuntu-latest
     permissions:
       contents: read # checkout only; Renovate authenticates as the App below
@@ -26,23 +23,16 @@ jobs:
           client-id: 1988247
           private-key: ${{ secrets.UPGRADE_DEPENDENCIES_BOT_PEM }}
           owner: neuralsec-io
-          # Narrowed to only the repositories this run needs, rather than the
-          # App's full installation scope: the repo being updated, plus the one
-          # holding the preset that Renovate resolves over the API.
           repositories: |
             upload-sarif
             upgrade-deps
 
-      # persist-credentials: false — otherwise actions/checkout leaves an
-      # Authorization header wired in via includeIf.gitdir, scoped to this repo,
-      # which git would send in preference to Renovate's own credentials for any
-      # datasource that shells out to git.
+      # persist-credentials: false — otherwise checkout's header overrides
+      # Renovate's git credentials.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # Provides go (for go.sum updates) and renovate itself, both pinned in
-      # mise.toml, so Renovate can keep its own version current.
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
         with:
           install: true
@@ -56,6 +46,5 @@ jobs:
           RENOVATE_PLATFORM_COMMIT: "enabled" # commits signed by the App
           RENOVATE_CONFIG_FILE: .github/renovate.json
           RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
-        # node@24 rather than whatever the runner image ships: renovate 44
-        # declares `node ^24.11.0`, and ubuntu-latest is already past that.
+        # renovate 44 requires node ^24.11.0; the runner image ships newer.
         run: mise exec node@24 -- renovate
