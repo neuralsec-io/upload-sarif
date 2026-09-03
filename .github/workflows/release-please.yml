@@ -10,22 +10,35 @@ permissions: {}
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
+    # No GITHUB_TOKEN scope at all: the App token below does every write.
+    # GITHUB_TOKEN cannot open the release PR here — this repo is public and
+    # sets can_approve_pull_request_reviews = false (see the infrastructure
+    # repo), so Actions is barred from creating pull requests.
+    permissions: {}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       major: ${{ steps.release.outputs.major }}
     steps:
+      - id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: 1988247
+          private-key: ${{ secrets.UPGRADE_DEPENDENCIES_BOT_PEM }}
+          owner: neuralsec-io
+          repositories: upload-sarif
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
+          token: ${{ steps.token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # Chained, not tag-triggered: tags pushed with GITHUB_TOKEN do not start
-  # other workflows.
+  # Chained, never tag-triggered. release-please now tags with the App token,
+  # and App-token pushes DO start workflows — so release.yml's `push: tags`
+  # trigger was removed in the same change. Without that removal a release
+  # would run twice: once from the tag push, once from this chained call.
   goreleaser:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}

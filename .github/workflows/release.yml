@@ -1,9 +1,9 @@
 name: Release
 
+# workflow_call only. A `push: tags` trigger would double-run this workflow:
+# release-please tags with the App token, whose pushes (unlike GITHUB_TOKEN's)
+# do start workflows, and release-please.yml already chains here explicitly.
 on:
-  push:
-    tags:
-      - "v*"
   workflow_call:
 
 permissions:
