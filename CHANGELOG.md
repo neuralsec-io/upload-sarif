@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.4](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.3...v2.0.4) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** let release-please open its PR with the App token ([21c162e](https://github.com/neuralsec-io/upload-sarif/commit/21c162e5ff1cb2f9775b020fb23e8ab6146596f1))
+* **deps:** update module github.com/stretchr/testify to v1.12.1 ([#28](https://github.com/neuralsec-io/upload-sarif/issues/28)) ([cc3e873](https://github.com/neuralsec-io/upload-sarif/commit/cc3e873ddef6ddc2a9aa2f7ab38781c1c7a9d123))
+
 ## [2.0.3](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.2...v2.0.3) (2026-08-12)
 
 
