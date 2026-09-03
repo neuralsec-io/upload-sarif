@@ -1,11 +1,11 @@
 [tools]
-go = "1.26.5"
-prek = "0.4.11"
-"github:golangci/golangci-lint" = "2.12.2"
+go = "1.27.0"
+prek = "0.4.14"
+"github:golangci/golangci-lint" = "2.13.0"
 "github:goreleaser/goreleaser" = "2.17.1"
 "github:gotestyourself/gotestsum" = "1.13.0"
 # Exclude is version-exact so anything else still trips mise's trust policy.
-"npm:renovate" = { version = "44.26.0", trust_policy_excludes = [
+"npm:renovate" = { version = "44.35.3", trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
 ] }
 
