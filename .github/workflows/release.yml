@@ -22,6 +22,11 @@ on:
         description: "Existing tag to rebuild assets for, e.g. v2.0.4"
         required: true
         type: string
+      include_docker:
+        description: "Also rebuild and push the ghcr image (off by default: a rebuild should not move published image tags onto new digests)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write # needed to write releases
@@ -52,9 +57,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
-          # A rebuild skips Docker: ghcr images are not affected by a repository
+          # A rebuild skips Docker by default: ghcr images survive a repository
           # recreate, so re-pushing them would only move published tags onto new
-          # digests. Only the release assets need restoring.
-          args: release --clean ${{ inputs.tag && '--skip=docker' || '' }}
+          # digests. Only the release assets need restoring. include_docker is
+          # the escape hatch for when the image itself has to be republished.
+          args: release --clean ${{ (inputs.tag && !inputs.include_docker) && '--skip=docker' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
