@@ -76,6 +76,12 @@ dockers_v2:
       "org.opencontainers.image.revision": "{{.FullCommit}}"
       "org.opencontainers.image.version": "{{.Version}}"
       "org.opencontainers.image.source": "{{.GitURL}}"
+      "org.opencontainers.image.description": "Upload SARIF files to Neuralsec API for security analysis"
+    # The package page reads its description from the manifest index, not from
+    # the image config, so a LABEL alone leaves it saying "No description
+    # provided" — these images are multi-arch (linux/amd64 + linux/arm64).
+    annotations:
+      "org.opencontainers.image.description": "Upload SARIF files to Neuralsec API for security analysis"
 
 docker_signs:
   - cmd: cosign

@@ -4,8 +4,8 @@
   "platformAutomerge": true,
   "packageRules": [
     {
-      "description": "Automerge non-major updates. This repo is public, so a human clicking merge is written into merged_by permanently and GitHub offers no way to edit it; letting the App merge keeps personal accounts off the public record. The shared preset already holds updates back 14 days and requires green checks, so this is not merging anything unseen. Majors still wait for a human.",
-      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "description": "Automerge every update, majors included. This repo is public, so a human clicking merge is written into merged_by permanently and GitHub offers no way to edit it — the only way to remove it has been to delete and recreate the repository, which has happened twice. Leaving majors manual left exactly that hole open. This is not merging anything unreviewed: the shared preset holds updates back 14 days with internalChecksFilter strict, and the default-branch ruleset requires lint and tests, so a major that breaks the build cannot land.",
+      "matchUpdateTypes": ["major", "minor", "patch", "digest", "pin", "pinDigest"],
       "automerge": true
     }
   ]
