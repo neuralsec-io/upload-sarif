@@ -6,6 +6,23 @@ name: Release
 on:
   workflow_call:
 
+  # Rebuild the assets of a tag that already exists. Release assets do not
+  # survive a repository recreate, and they cannot be rebuilt locally: action.yml
+  # verifies checksums.txt against a signer identity of
+  # release.yml@refs/(heads/main|tags/.+), which only a run of this workflow can
+  # produce. Dispatch is on main because tags older than this trigger have no
+  # workflow_dispatch in their own copy of the file; the checkout below moves to
+  # the requested tag, and refs/heads/main satisfies that identity regexp.
+  #
+  # This does not double-run releases the way a `push: tags` trigger would — it
+  # only fires when asked.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to rebuild assets for, e.g. v2.0.4"
+        required: true
+        type: string
+
 permissions:
   contents: write # needed to write releases
   id-token: write # needed for keyless signing
@@ -20,6 +37,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # Empty for workflow_call, so this keeps the triggering commit.
+          ref: ${{ inputs.tag || github.sha }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
@@ -33,6 +52,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
-          args: release --clean
+          # A rebuild skips Docker: ghcr images are not affected by a repository
+          # recreate, so re-pushing them would only move published tags onto new
+          # digests. Only the release assets need restoring.
+          args: release --clean ${{ inputs.tag && '--skip=docker' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

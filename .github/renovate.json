@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>neuralsec-io/upgrade-deps"]
+  "extends": ["github>neuralsec-io/upgrade-deps"],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates. This repo is public, so a human clicking merge is written into merged_by permanently and GitHub offers no way to edit it; letting the App merge keeps personal accounts off the public record. The shared preset already holds updates back 14 days and requires green checks, so this is not merging anything unseen. Majors still wait for a human.",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "automerge": true
+    }
+  ]
 }
