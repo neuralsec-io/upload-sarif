@@ -23,8 +23,8 @@ jobs:
       - id: token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: 1988247
-          private-key: ${{ secrets.UPGRADE_DEPENDENCIES_BOT_PEM }}
+          client-id: 4874104
+          private-key: ${{ secrets.NEURALSEC_CI_BOT_PEM }}
           owner: neuralsec-io
           repositories: upload-sarif
 
@@ -34,6 +34,16 @@ jobs:
           token: ${{ steps.token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Let GitHub merge the release PR once Code Quality passes, as the App.
+      # A human clicking merge on a public repo is written into merged_by
+      # permanently, and GitHub exposes no API to change it.
+      - name: Enable auto-merge on the release PR
+        if: ${{ steps.release.outputs.pr }}
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          PR_NUMBER: ${{ fromJson(steps.release.outputs.pr).number }}
+        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
 
   # Chained, never tag-triggered. release-please now tags with the App token,
   # and App-token pushes DO start workflows — so release.yml's `push: tags`
