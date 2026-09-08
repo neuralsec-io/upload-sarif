@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/neuralsec-io/upload-sarif/compare/v2.1.1...v2.1.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ci:** automerge majors too, and describe the ghcr package ([#6](https://github.com/neuralsec-io/upload-sarif/issues/6)) ([5321e96](https://github.com/neuralsec-io/upload-sarif/commit/5321e96422954eb1ebbce7ed386766e6d9128145))
+
 ## [2.1.1](https://github.com/neuralsec-io/upload-sarif/compare/v2.1.0...v2.1.1) (2026-09-08)
 
 
