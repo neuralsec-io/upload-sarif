@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.4...v2.1.0) (2026-09-08)
+
+
+### Features
+
+* **ci:** move automation onto neuralsec-ci-bot and stop merging by hand ([#1](https://github.com/neuralsec-io/upload-sarif/issues/1)) ([e2dcbdc](https://github.com/neuralsec-io/upload-sarif/commit/e2dcbdcff4fe2c5c0b6979468a24258a7049c3bf))
+
 ## [2.0.4](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.3...v2.0.4) (2026-09-03)
 
 
