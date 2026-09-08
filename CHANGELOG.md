@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/neuralsec-io/upload-sarif/compare/v2.1.0...v2.1.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ci:** stop the auto-merge step failing the release job ([#3](https://github.com/neuralsec-io/upload-sarif/issues/3)) ([210c919](https://github.com/neuralsec-io/upload-sarif/commit/210c919db96754ec753233b47321287168562bfb))
+
 ## [2.1.0](https://github.com/neuralsec-io/upload-sarif/compare/v2.0.4...v2.1.0) (2026-09-08)
 
 
