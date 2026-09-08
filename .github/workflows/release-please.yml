@@ -35,15 +35,23 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Let GitHub merge the release PR once Code Quality passes, as the App.
-      # A human clicking merge on a public repo is written into merged_by
+      # Let GitHub merge the release PR once the required checks pass, as the
+      # App. A human clicking merge on a public repo is written into merged_by
       # permanently, and GitHub exposes no API to change it.
+      #
+      # The number is parsed in the shell, not with fromJson() in an expression:
+      # on the run that creates the release there is no PR, outputs.pr is an
+      # empty string, and fromJson('') fails at template-evaluation time — which
+      # happens even though `if` is false, failing the job before goreleaser.
       - name: Enable auto-merge on the release PR
         if: ${{ steps.release.outputs.pr }}
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          PR_NUMBER: ${{ fromJson(steps.release.outputs.pr).number }}
-        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+        run: |
+          number=$(jq -r '.number // empty' <<<"$RELEASE_PR")
+          [ -n "$number" ] || { echo "no release PR to auto-merge"; exit 0; }
+          gh pr merge "$number" --auto --squash --repo "$GITHUB_REPOSITORY"
 
   # Chained, never tag-triggered. release-please now tags with the App token,
   # and App-token pushes DO start workflows — so release.yml's `push: tags`
