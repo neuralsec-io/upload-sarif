@@ -18,7 +18,7 @@ jobs:
       contents: read # checkout only; Renovate authenticates as the App below
     steps:
       - id: token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: 4874104
           private-key: ${{ secrets.NEURALSEC_CI_BOT_PEM }}
@@ -33,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           install: true
           cache: false
