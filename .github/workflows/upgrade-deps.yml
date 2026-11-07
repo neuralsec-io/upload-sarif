@@ -25,7 +25,7 @@ jobs:
           owner: neuralsec-io
           repositories: |
             upload-sarif
-            upgrade-deps
+            actions
 
       # persist-credentials: false — otherwise checkout's header overrides
       # Renovate's git credentials.
